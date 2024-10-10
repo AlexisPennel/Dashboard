@@ -1,6 +1,12 @@
 "use client";
 import React, { useState } from "react";
-import { Card, CardContent, CardHeader, CardTitle } from "../ui/card";
+import {
+  Card,
+  CardContent,
+  CardFooter,
+  CardHeader,
+  CardTitle,
+} from "../ui/card";
 import { Label } from "@radix-ui/react-dropdown-menu";
 import { Input } from "../ui/input";
 import { Button } from "../ui/button";
@@ -12,6 +18,7 @@ const Login = () => {
   const [mail, setMail] = useState("");
   const [password, setPassword] = useState("");
   const [isLoading, setIsLoading] = useState(false);
+  const [isError, setIsError] = useState(false);
 
   const getCookie = (name) => {
     let cookieArray = document.cookie.split(";");
@@ -27,9 +34,6 @@ const Login = () => {
   const handleSubmit = (e) => {
     setIsLoading(true);
     e.preventDefault();
-    // Vous pouvez maintenant accéder aux valeurs des inputs
-    console.log("Email:", mail);
-    console.log("Mot de passe:", password);
 
     const data = {
       email: mail,
@@ -58,6 +62,7 @@ const Login = () => {
           window.location.href = "/admin/dashboard";
         } else {
           setIsLoading(false);
+          setIsError(true);
           // Gérer l'erreur si les cookies ne sont pas présents
           console.error("Les cookies n'ont pas été correctement créés.");
         }
@@ -65,6 +70,7 @@ const Login = () => {
       .catch((error) => {
         console.log(error);
         setIsLoading(false);
+        setIsError(true);
         const form = e.target;
         form.reset();
       });
@@ -86,6 +92,7 @@ const Login = () => {
               type="email"
               placeholder="m@example.com"
               value={mail}
+              autoComplete="on"
               onChange={(e) => setMail(e.target.value)}
               required
             />
@@ -100,6 +107,7 @@ const Login = () => {
               value={password}
               onChange={(e) => setPassword(e.target.value)}
               required
+              autoComplete="on"
             />
           </div>
           {isLoading ? (
@@ -109,11 +117,16 @@ const Login = () => {
             </Button>
           ) : (
             <Button type="submit" className="w-full" variant="">
-              Créer un compte
+              Connexion
             </Button>
           )}
         </form>
       </CardContent>
+      <CardFooter>
+        {isError && (
+          <p className="text-red-700">Email ou mot de passe incorrect</p>
+        )}
+      </CardFooter>
     </Card>
   );
 };
