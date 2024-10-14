@@ -1,6 +1,6 @@
 import React from "react";
 import { cookies } from "next/headers";
-import ProductsDash from "@/components/Dashboard/ProductsDash/ProductsDash";
+import ProductsDash from "../../../components/Dashboard/ProductsDash/ProductsDash";
 
 const page = () => {
   const cookieStore = cookies();

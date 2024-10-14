@@ -12,7 +12,6 @@ import {
 import { Label } from "@radix-ui/react-dropdown-menu";
 import { Input } from "@/components/ui/input";
 import { CategoriesContext } from "@/app/context/CategoriesProvider";
-import { check } from "prettier";
 import { checkAddCategory } from "@/lib/CheckAddCategory";
 
 const AddCategory = () => {
@@ -62,7 +61,7 @@ const AddCategory = () => {
   return (
     <Card className="w-full max-w-md">
       <CardHeader className="p-4 md:p-6">
-        <CardTitle className="text-xl font-medium tracking-tight">
+        <CardTitle className="font-medium tracking-tight">
           Créer une catégorie
         </CardTitle>
         <CardDescription>

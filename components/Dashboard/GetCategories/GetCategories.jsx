@@ -1,3 +1,4 @@
+/* eslint-disable react-hooks/exhaustive-deps */
 "use client";
 import React, { useState, useEffect, useContext } from "react";
 import { Button } from "@/components/ui/button";
@@ -20,7 +21,7 @@ import { Pencil2Icon, TrashIcon } from "@radix-ui/react-icons";
 import Image from "next/image";
 import Link from "next/link";
 import { CategoriesContext } from "@/app/context/CategoriesProvider";
-import Loader from "@/components/Loader/Loader";
+import Loader from "../../Loader/Loader";
 
 const GetCategories = ({ page }) => {
   const { categories, fetchCategories, deleteCategory } =
@@ -56,13 +57,13 @@ const GetCategories = ({ page }) => {
   }
 
   return (
-    <Card className="w-full">
+    <Card className="w-full max-w-4xl">
       <CardHeader className="p-4 md:p-6">
-        <CardTitle className="text-xl font-medium tracking-tight">
+        <CardTitle className="font-medium tracking-tight">
           Catégories des produits
           <br />
           {categories.length >= 0 && (
-            <span className="text-sm text-primary">
+            <span className="text-base text-primary">
               {categories.length} catégorie(s)
             </span>
           )}
@@ -86,12 +87,12 @@ const GetCategories = ({ page }) => {
                     height={200}
                     alt={category.altDescription}
                     crossOrigin="anonymous"
-                    className="h-20 w-14 rounded object-cover"
+                    className="h-20 w-14 rounded object-cover lg:h-36 lg:w-24"
                   />
                   <div className="flex h-full flex-col">
                     <h3 className="font-medium">{category.name}</h3>
                     {category.productIds.length >= 0 && (
-                      <p className="text-sm text-muted-foreground">
+                      <p className="text-muted-foreground">
                         {category.productIds.length} Produit(s)
                       </p>
                     )}
