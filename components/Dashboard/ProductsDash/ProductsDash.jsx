@@ -1,7 +1,4 @@
 "use client";
-import { Button } from "@/components/ui/button";
-import { PlusIcon } from "lucide-react";
-import Link from "next/link";
 import React, { useEffect, useState } from "react";
 import GetProducts from "../GetProducts/GetProducts";
 import { useRouter } from "next/navigation";
@@ -25,16 +22,14 @@ const ProductsDash = ({ token }) => {
   }
 
   return (
-    <section className="flex flex-col gap-4">
+    <section className="flex flex-col gap-4 md:gap-8">
       <header className="flex justify-between">
-        <h1 className="text-xl font-semibold md:text-2xl">
-          Vue d&apos;ensemble des produits
-        </h1>
+        <h1 className="font-semibold">Vue d&apos;ensemble des produits</h1>
       </header>
-      <div className="grid grid-cols-1 gap-4">
+      <section className="grid grid-cols-1 gap-4 md:gap-8">
         <GetProducts limit={4} />
-        <GetCategories />
-      </div>
+        <GetCategories page={"dashboard"} />
+      </section>
     </section>
   );
 };

@@ -1,25 +1,53 @@
-import AddProduct from "@/components/Dashboard/AddProduct/AddProduct";
+"use client";
 import {
   Breadcrumb,
   BreadcrumbItem,
   BreadcrumbLink,
   BreadcrumbList,
-  BreadcrumbPage,
   BreadcrumbSeparator,
 } from "@/components/ui/breadcrumb";
 import Link from "next/link";
-import React from "react";
+import React, { useState, useEffect } from "react";
+import AddProduct from "../AddProduct/AddProduct";
+import { useRouter } from "next/navigation";
+import Loader from "@/components/Loader/Loader";
 
-const page = () => {
+const ProductAddPage = ({ token }) => {
+  const router = useRouter();
+  const [isLogged, setIsLoged] = useState(false);
+
+  useEffect(() => {
+    if (token) {
+      setIsLoged(true);
+      return;
+    }
+    router.push("/admin/login");
+  }, []);
+
+  if (!isLogged) {
+    return <Loader />;
+  }
+
   return (
-    <main className="flex flex-1 flex-col gap-4 p-4 md:gap-8 md:p-8">
+    <section className="flex flex-col gap-8">
       <header className="flex flex-col gap-2">
         <Breadcrumb className="hidden md:flex">
           <BreadcrumbList>
             <BreadcrumbItem>
               <BreadcrumbLink asChild>
                 <Link href="/admin/produits" className="hover:text-primary">
-                  Produits
+                  Vue d&apos;ensemble
+                </Link>
+              </BreadcrumbLink>
+            </BreadcrumbItem>
+            <BreadcrumbSeparator />
+            <BreadcrumbItem>
+              <BreadcrumbLink asChild>
+                <Link
+                  href="/admin/produits/liste"
+                  className="hover:text-primary"
+                >
+                  Liste des produits
                 </Link>
               </BreadcrumbLink>
             </BreadcrumbItem>
@@ -39,8 +67,8 @@ const page = () => {
         <h1 className="text-2xl font-semibold">Ajouter un produit</h1>
       </header>
       <AddProduct />
-    </main>
+    </section>
   );
 };
 
-export default page;
+export default ProductAddPage;

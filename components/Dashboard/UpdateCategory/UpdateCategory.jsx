@@ -1,38 +1,46 @@
 "use client";
 import React, { useState, useEffect, useContext } from "react";
-import { usePathname, useRouter } from "next/navigation"; // Utilisé pour obtenir l'ID de l'URL
+import { usePathname } from "next/navigation"; // Utilisé pour obtenir l'ID de l'URL
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import {
+  Card,
+  CardContent,
+  CardFooter,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
 import { Label } from "@radix-ui/react-dropdown-menu";
 import { Input } from "@/components/ui/input";
-import api from "@/app/api";
-import { AppContext } from "@/app/context/AppContext";
+import { CategoriesContext } from "@/app/context/CategoriesProvider";
+import Loader from "@/components/Loader/Loader";
+import { checkAddCategory } from "@/lib/CheckAddCategory";
 
 const UpdateCategory = () => {
-  const router = useRouter();
   const pathname = usePathname();
   const categoryId = pathname.split("/").pop(); // Récupère l'ID de la catégorie depuis l'URL
-  const { categories, setCategories, loadDatas } = useContext(AppContext);
+  const { categories, fetchCategories, updateCategory } =
+    useContext(CategoriesContext);
   const [category, setCategory] = useState(null);
   const [categoryName, setCategoryName] = useState("");
-  const [categoryImage, setCategoryImage] = useState(null); // Nouvelle image
-  const [categoryAlt, setCategoryAlt] = useState(""); // État pour la description alt
+  const [categoryImage, setCategoryImage] = useState("");
+  const [categoryAlt, setCategoryAlt] = useState("");
+  const [loadingDatas, setLoadingDatas] = useState(true);
   const [isLoading, setIsLoading] = useState(false);
+  const [formErrorMessage, setFormErrorMessage] = useState([]);
 
-  // Vérifier que les catégories sont chargées avant de les utiliser
   useEffect(() => {
     if (categories && categories.length > 0) {
       const foundCategory = categories.find((cat) => cat._id === categoryId);
       if (foundCategory) {
         setCategory(foundCategory);
         setCategoryName(foundCategory.name);
-        setCategoryAlt(foundCategory.alt); // Récupérer la description alt
+        setCategoryAlt(foundCategory.alt);
+        setLoadingDatas(false);
       } else {
-        // Si la catégorie n'est pas dans le contexte, on fait un appel API
-        loadDatas();
+        fetchCategories();
       }
     } else {
-      loadDatas();
+      fetchCategories();
     }
   }, [categoryId, categories]);
 
@@ -42,38 +50,40 @@ const UpdateCategory = () => {
 
   const handleSubmit = (e) => {
     e.preventDefault();
+    setFormErrorMessage([]);
     setIsLoading(true);
 
     // Création d'un FormData pour l'envoi des données (multipart)
     const formData = new FormData();
+    formData.append("_id", category._id);
     formData.append("name", categoryName);
     formData.append("altDescription", categoryAlt); // Ajoute la description alt
     if (categoryImage) {
       formData.append("image", categoryImage); // Ajoute la nouvelle image si modifiée
     }
 
-    api
-      .put(`/api/category/${categoryId}`, formData, {
-        headers: {
-          "Content-Type": "multipart/form-data",
-        },
-      })
-      .then((res) => {
-        setIsLoading(false);
-        // Met à jour la catégorie dans le contexte
-        setCategories((prevCategories) =>
-          prevCategories.map((cat) =>
-            cat._id === categoryId ? res.data : cat,
-          ),
-        );
-        console.log(categories);
-        router.push("/admin/produits/categories");
-      })
-      .catch((error) => {
-        setIsLoading(false);
-        console.log(error);
-      });
+    if (checkAddCategory(formData).length > 0) {
+      setFormErrorMessage(checkAddCategory(formData));
+      setIsLoading(false);
+      return;
+    }
+
+    try {
+      updateCategory(formData);
+    } catch (error) {
+      console.log(error);
+      setFormErrorMessage(["Erreur lors de l'envoi du formulaire"]);
+    } finally {
+      setIsLoading(false);
+      setCategoryName("");
+      setCategoryImage(null);
+      setCategoryAlt("");
+    }
   };
+
+  if (loadingDatas) {
+    return <Loader />;
+  }
 
   return (
     <Card className="w-full max-w-md">
@@ -92,7 +102,7 @@ const UpdateCategory = () => {
             <Input
               id="categoryName"
               type="text"
-              value={categoryName}
+              value={categoryName || ""}
               onChange={(e) => setCategoryName(e.target.value)}
               required
             />
@@ -102,6 +112,10 @@ const UpdateCategory = () => {
           <div className="grid gap-2">
             <Label htmlFor="categoryImage" className="text-sm font-medium">
               Image de la catégorie
+              <br />
+              <span className="text-sm font-normal text-muted-foreground">
+                *Modification obligatoire
+              </span>
             </Label>
             <Input
               id="categoryImage"
@@ -114,13 +128,13 @@ const UpdateCategory = () => {
 
           {/* Champ pour la description alt */}
           <div className="grid gap-2">
-            <Label htmlFor="categoryAlt" className="text-sm font-medium">
+            <Label htmlFor="altDescription" className="text-sm font-medium">
               Description alt de l&apos;image
             </Label>
             <Input
-              id="categoryAlt"
+              id="altDescription"
               type="text"
-              value={categoryAlt}
+              value={categoryAlt || ""}
               onChange={(e) => setCategoryAlt(e.target.value)}
               required
             />
@@ -135,6 +149,17 @@ const UpdateCategory = () => {
           )}
         </form>
       </CardContent>
+      <CardFooter>
+        {formErrorMessage.length >= 1 && (
+          <ul>
+            {formErrorMessage.map((error, index) => (
+              <li key={index} className="font-semibold text-red-600">
+                {error}
+              </li>
+            ))}
+          </ul>
+        )}
+      </CardFooter>
     </Card>
   );
 };

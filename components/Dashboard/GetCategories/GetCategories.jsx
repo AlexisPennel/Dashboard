@@ -1,7 +1,5 @@
 "use client";
 import React, { useState, useEffect, useContext } from "react";
-import api from "@/app/api";
-import { AppContext } from "@/app/context/AppContext"; // Assurez-vous que ce chemin est correct
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
@@ -11,40 +9,39 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import {
+  Card,
+  CardContent,
+  CardFooter,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
 import { Pencil2Icon, TrashIcon } from "@radix-ui/react-icons";
 import Image from "next/image";
 import Link from "next/link";
+import { CategoriesContext } from "@/app/context/CategoriesProvider";
+import Loader from "@/components/Loader/Loader";
 
-const GetCategories = () => {
-  const { categories, setCategories, loadDatas } = useContext(AppContext);
+const GetCategories = ({ page }) => {
+  const { categories, fetchCategories, deleteCategory } =
+    useContext(CategoriesContext);
   const [isLoading, setIsLoading] = useState(true);
   const [dialogOpen, setDialogOpen] = useState(false);
   const [categoryToDelete, setCategoryToDelete] = useState(null); // Store the category to delete
 
   useEffect(() => {
     if (categories === null) {
-      console.log("fetch datas");
-      loadDatas();
+      fetchCategories();
     } else if (categories !== null) {
       setIsLoading(false);
     }
   }, [categories]);
 
-  // Handle delete category
-  const handleDeleteCategory = async () => {
-    try {
-      await api.delete(`/api/category/${categoryToDelete._id}`);
-      setCategories((prevCategories) =>
-        prevCategories.filter(
-          (category) => category._id !== categoryToDelete._id,
-        ),
-      );
+  const handleDeleteCategory = () => {
+    if (categoryToDelete) {
+      deleteCategory(categoryToDelete._id);
       setDialogOpen(false);
-      setCategoryToDelete(null); // Réinitialiser après la suppression
-    } catch (error) {
-      console.error("Erreur lors de la suppression de la catégorie", error);
-      setDialogOpen(false);
+      setCategoryToDelete(null);
     }
   };
 
@@ -54,14 +51,24 @@ const GetCategories = () => {
     setDialogOpen(true);
   };
 
+  if (isLoading) {
+    return <Loader />;
+  }
+
   return (
     <Card className="w-full">
-      <CardHeader className="p-6">
+      <CardHeader className="p-4 md:p-6">
         <CardTitle className="text-xl font-medium tracking-tight">
           Catégories des produits
+          <br />
+          {categories.length >= 0 && (
+            <span className="text-sm text-primary">
+              {categories.length} catégorie(s)
+            </span>
+          )}
         </CardTitle>
       </CardHeader>
-      <CardContent>
+      <CardContent className="p-4 md:p-6">
         {isLoading ? (
           ""
         ) : (
@@ -70,19 +77,19 @@ const GetCategories = () => {
             {categories.map((category) => (
               <li
                 key={category._id}
-                className="flex items-center justify-between rounded border bg-gray-50 p-2 px-4"
+                className="flex justify-between gap-2 rounded border bg-gray-50 p-2 px-2"
               >
-                <div className="flex items-center gap-2">
+                <div className="flex gap-2">
                   <Image
                     src={`http://localhost:3000${category.image}`}
                     width={200}
                     height={200}
                     alt={category.altDescription}
                     crossOrigin="anonymous"
-                    className="h-12 w-12 rounded object-cover"
+                    className="h-20 w-14 rounded object-cover"
                   />
-                  <div className="flex items-center gap-4">
-                    <h3 className="text-lg font-medium">{category.name}</h3>
+                  <div className="flex h-full flex-col">
+                    <h3 className="font-medium">{category.name}</h3>
                     {category.productIds.length >= 0 && (
                       <p className="text-sm text-muted-foreground">
                         {category.productIds.length} Produit(s)
@@ -90,22 +97,21 @@ const GetCategories = () => {
                     )}
                   </div>
                 </div>
-                <div className="flex gap-2">
-                  <Button>
+                <div className="flex items-center gap-1">
+                  <Button size="sm">
                     <Link
                       href={`/admin/produits/categories/${category._id}`}
                       className="flex w-fit items-center gap-1"
                     >
-                      <Pencil2Icon className="mr-2 h-4 w-4" />
-                      <p>Modifier</p>
+                      <Pencil2Icon className="h-4 w-4" />
                     </Link>
                   </Button>
                   <Button
+                    size="sm"
                     variant="destructive"
                     onClick={() => confirmDeleteCategory(category)}
-                    className="h-fit w-fit"
                   >
-                    <TrashIcon className="mr-2 h-4 w-4" /> Supprimer
+                    <TrashIcon className="h-4 w-4" />
                   </Button>
                 </div>
               </li>
@@ -141,6 +147,13 @@ const GetCategories = () => {
           </Dialog>
         )}
       </CardContent>
+      {page === "dashboard" && (
+        <CardFooter className="p-4 md:p-6">
+          <Button>
+            <Link href="/admin/produits/categories">Ajouter une catégorie</Link>
+          </Button>
+        </CardFooter>
+      )}
     </Card>
   );
 };

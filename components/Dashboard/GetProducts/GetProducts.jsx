@@ -12,16 +12,15 @@ import { Badge } from "@/components/ui/badge";
 import Image from "next/image";
 import Link from "next/link";
 import { calculateFinalPrice } from "@/lib/calculatePrice";
-import { AppContext } from "@/app/context/AppContext";
+import { ProductContext } from "@/app/context/ProductContext";
 import { Button } from "@/components/ui/button";
 
 const GetProducts = ({ limit, page }) => {
   const [loading, setLoading] = useState(true);
-  const { products, categories, loadDatas } = useContext(AppContext);
+  const { products, categories, loadDatas } = useContext(ProductContext);
 
   useEffect(() => {
-    if (products === null && categories === null) {
-      console.log("fetch datas");
+    if (products === null || categories === null) {
       loadDatas();
     } else if (products !== null && categories !== null) {
       setLoading(false);
@@ -42,7 +41,18 @@ const GetProducts = ({ limit, page }) => {
   }
 
   if (products.length === 0) {
-    return <p>Aucun produit trouvé</p>;
+    return (
+      <Card>
+        <CardContent className="flex flex-col gap-2 p-4">
+          <p className="text-base font-semibold">Aucun produit trouvé</p>
+          <Button className="w-fit">
+            <Link href="produits/liste/ajouter-produit">
+              Ajouter un produit
+            </Link>
+          </Button>
+        </CardContent>
+      </Card>
+    );
   }
 
   // Limiter le nombre de produits si `limit` est fourni
@@ -52,22 +62,26 @@ const GetProducts = ({ limit, page }) => {
     <Card className="w-full">
       {page !== "list" && (
         <CardHeader className="p-4 md:p-6">
-          <CardTitle className="text-xl font-medium tracking-tight">
-            Liste des produits
-          </CardTitle>
+          <CardTitle className="font-medium">Liste des produits</CardTitle>
           <CardDescription>
-            Aperçu des produits. Cliquez sur voir plus pour afficher tous les
-            produits
+            Aperçu des derniers produits. Cliquez sur voir plus pour afficher
+            tous les produits
+            <br />
+            {products.length >= 0 && (
+              <span className="text-sm font-normal text-primary md:text-base">
+                {products.length} produits au total
+              </span>
+            )}
           </CardDescription>
         </CardHeader>
       )}
       <CardContent className="p-4 md:p-6">
-        <ul className="grid grid-cols-2 gap-4 md:grid-cols-4 lg:grid-cols-6">
+        <ul className="grid grid-cols-2 gap-2 md:grid-cols-6 md:gap-5 2xl:grid-cols-8">
           {productsToDisplay.map((product) => (
-            <li key={product._id} className="w-fit">
+            <li key={product._id} className="w-full">
               <Link
                 href={`/admin/produits/liste/${product.slug}`}
-                className="relative flex h-fit max-w-52 flex-col justify-between gap-2 rounded border bg-gray-50 p-2 transition hover:bg-gray-100"
+                className="relative flex h-fit flex-col justify-between gap-2 rounded border bg-gray-50 p-2 transition hover:bg-gray-100"
               >
                 <div className="flex flex-col gap-2">
                   <Image
@@ -76,10 +90,10 @@ const GetProducts = ({ limit, page }) => {
                     height={200}
                     alt={product.name}
                     crossOrigin="anonymous"
-                    className="w-full rounded object-cover"
+                    className="h-44 w-full rounded object-cover object-center"
                   />
                   <div className="flex flex-col justify-between gap-2">
-                    <h4 className="text-base font-semibold">{product.name}</h4>
+                    <h4 className="font-semibold">{product.name}</h4>
                     <Badge
                       variant={
                         product.status === "online" ? "online" : "brouillon"
@@ -121,7 +135,7 @@ const GetProducts = ({ limit, page }) => {
         {page !== "list" && (
           <>
             <Button variant="outline">
-              <Link href="/admin/produits/ajouter-produit">
+              <Link href="/admin/produits/liste/ajouter-produit">
                 Ajouter un produit
               </Link>
             </Button>
@@ -132,7 +146,7 @@ const GetProducts = ({ limit, page }) => {
         )}
         {page === "list" && (
           <Button>
-            <Link href="/admin/produits/ajouter-produit">
+            <Link href="/admin/produits/liste/ajouter-produit">
               Ajouter un produit
             </Link>
           </Button>
