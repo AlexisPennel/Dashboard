@@ -33,7 +33,12 @@ const ProductUpdatePage = () => {
   const [discount, setDiscount] = useState(0);
   const [status, setStatus] = useState("");
   const [description, setDescription] = useState("");
-  const [category, setCategory] = useState(""); // State for product category
+  const [tips, setTips] = useState({
+    expoContent: "",
+    arrosageContent: "",
+    humidityContent: "",
+  });
+  const [selectedCategories, setSelectedCategories] = useState([]);
   const [metadata, setMetadata] = useState({
     title: "",
     description: "",
@@ -54,11 +59,17 @@ const ProductUpdatePage = () => {
         setDiscount(productFind.discount);
         setStatus(productFind.status);
         setDescription(productFind.description);
-        setCategory(productFind.category);
+        setTips({
+          expoContent: productFind.tips.expoContent,
+          arrosageContent: productFind.tips.arrosageContent,
+          humidityContent: productFind.tips.humidityContent,
+        });
+        setSelectedCategories(productFind.category || []);
         setMetadata({
           title: productFind.metaTitle,
           description: productFind.metaDescription,
         });
+        setAltDescriptions(productFind.altDescriptions);
         setLoading(false);
       }
     }
@@ -66,6 +77,9 @@ const ProductUpdatePage = () => {
 
   useEffect(() => {
     console.log(product);
+    if (product) {
+      console.log(product.category);
+    }
   }, [product]);
 
   const handleImagesChange = (e) => {
@@ -81,6 +95,19 @@ const ProductUpdatePage = () => {
 
   const handleMetadataChange = (field, value) => {
     setMetadata((prev) => ({ ...prev, [field]: value }));
+  };
+
+  const handleCategoryChange = (categoryId) => {
+    setSelectedCategories(
+      (prev) =>
+        prev.includes(categoryId)
+          ? prev.filter((id) => id !== categoryId) // Remove if already selected
+          : [...prev, categoryId], // Add if not selected
+    );
+  };
+
+  const handleTipsChange = (name, value) => {
+    setTips((prev) => ({ ...prev, [name]: value }));
   };
 
   const calculateFinalPrice = () => {
@@ -100,9 +127,14 @@ const ProductUpdatePage = () => {
     data.append("discount", discount);
     data.append("status", status);
     data.append("description", description);
-    data.append("category", category); // Envoyer la nouvelle catégorie pour mise à jour
+    data.append("tips", JSON.stringify(tips));
     data.append("metaTitle", metadata.title);
     data.append("metaDescription", metadata.description);
+
+    // Ajouter chaque catégorie individuellement
+    selectedCategories.forEach((category) => {
+      data.append("category", category);
+    });
 
     // Ajout des images
     for (let i = 0; i < images.length; i++) {
@@ -117,7 +149,7 @@ const ProductUpdatePage = () => {
     }
 
     try {
-      updateProduct(data, product.category, category);
+      updateProduct(data, product.category, selectedCategories);
     } catch (error) {
       console.log(error);
     } finally {
@@ -148,26 +180,24 @@ const ProductUpdatePage = () => {
               />
             </div>
 
-            {/* Catégorie du produit */}
+            {/* Catégories du produit */}
             <div className="grid gap-2">
-              <Label htmlFor="category" className="text-sm font-medium">
-                Catégorie du produit
+              <Label className="text-sm font-medium" id="category">
+                Catégories du produit
               </Label>
-              <Select value={category} onValueChange={setCategory}>
-                <SelectTrigger
-                  id="category"
-                  aria-label="Sélectionnez une catégorie"
-                >
-                  <SelectValue placeholder="Sélectionnez une catégorie" />
-                </SelectTrigger>
-                <SelectContent>
-                  {categories.map((cat) => (
-                    <SelectItem key={cat._id} value={cat._id}>
-                      {cat.name}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
+              {categories.map((cat) => (
+                <div key={cat._id} className="flex items-center gap-2">
+                  <input
+                    type="checkbox"
+                    id={`category-${cat._id}`}
+                    checked={selectedCategories.includes(cat._id)}
+                    onChange={() => handleCategoryChange(cat._id)}
+                  />
+                  <Label htmlFor={`category-${cat._id}`} className="text-sm">
+                    {cat.name}
+                  </Label>
+                </div>
+              ))}
             </div>
           </div>
           <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
@@ -230,6 +260,44 @@ const ProductUpdatePage = () => {
             />
           </div>
 
+          {/* Conseils du produit */}
+          <div className="grid gap-2">
+            <p className="text-base font-medium">Conseils d&apos;entretien</p>
+            <Label htmlFor="exposition" className="text-sm font-medium">
+              Exposition
+            </Label>
+            <Textarea
+              id="exposition"
+              value={tips.expoContent}
+              onChange={(e) => {
+                handleTipsChange("expoContent", e.target.value);
+              }}
+              required
+            />
+            <Label htmlFor="arrosage" className="text-sm font-medium">
+              Arrosage
+            </Label>
+            <Textarea
+              id="arrosage"
+              value={tips.arrosageContent}
+              onChange={(e) => {
+                handleTipsChange("arrosageContent", e.target.value);
+              }}
+              required
+            />
+            <Label htmlFor="humidity" className="text-sm font-medium">
+              Humidité
+            </Label>
+            <Textarea
+              id="humidity"
+              value={tips.humidityContent}
+              onChange={(e) => {
+                handleTipsChange("humidityContent", e.target.value);
+              }}
+              required
+            />
+          </div>
+
           {/* Meta Title */}
           <div className="grid gap-2">
             <Label htmlFor="metaTitle" className="text-sm font-medium">
@@ -263,24 +331,23 @@ const ProductUpdatePage = () => {
           <div className="grid gap-4">
             <Label htmlFor="images" className="font-semibold">
               Photos du produit
-              <span className="ml-2 text-sm font-medium text-red-700">
-                (Obligatoire)
-              </span>
             </Label>
             {images.length === 0 && (
               <div className="flex flex-col gap-2">
                 <h4 className="text-sm font-normal">Ancienne(s) photo(s):</h4>
-                {product.images.map((image, index) => (
-                  <li key={index} className="flex w-full gap-2">
-                    <Image
-                      src={`http://localhost:3000${image}`}
-                      alt={`${product.altDescriptions[index]}`}
-                      width={200}
-                      height={200}
-                      className="h-14 w-14 rounded-md object-cover shadow"
-                    />
-                  </li>
-                ))}
+                <ul className="flex gap-2">
+                  {product.images.map((image, index) => (
+                    <li key={index} className="flex gap-2">
+                      <Image
+                        src={`http://localhost:3000${image}`}
+                        alt={`${product.altDescriptions[index]}`}
+                        width={200}
+                        height={200}
+                        className="h-14 w-14 rounded-md object-cover shadow"
+                      />
+                    </li>
+                  ))}
+                </ul>
               </div>
             )}
             {/* Prévisualisation des images */}
@@ -295,7 +362,7 @@ const ProductUpdatePage = () => {
                       width={100}
                       height={100}
                       alt={`Aperçu de ${name} - Image ${index + 1}`}
-                      className="h-14 w-14 rounded"
+                      className="h-14 w-14 rounded object-cover"
                     />
                   ))}
                 </div>
@@ -306,22 +373,18 @@ const ProductUpdatePage = () => {
               type="file"
               multiple
               onChange={handleImagesChange}
-              required
             />
           </div>
 
           {/* Descriptions alternatives pour les images */}
-          {images.length > 0 &&
-            images.map((_, index) => (
+          {altDescriptions.length > 0 &&
+            altDescriptions.map((_, index) => (
               <div key={index} className="grid gap-2">
                 <Label
                   htmlFor={`altDescription${index}`}
                   className="font-medium"
                 >
                   Description ALT image {index + 1}
-                  <span className="ml-2 text-sm font-medium text-red-700">
-                    (Obligatoire)
-                  </span>
                 </Label>
                 <Input
                   id={`altDescription${index}`}

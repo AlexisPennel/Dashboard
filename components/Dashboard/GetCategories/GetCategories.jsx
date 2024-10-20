@@ -13,6 +13,7 @@ import {
 import {
   Card,
   CardContent,
+  CardDescription,
   CardFooter,
   CardHeader,
   CardTitle,
@@ -22,6 +23,14 @@ import Image from "next/image";
 import Link from "next/link";
 import { CategoriesContext } from "@/app/context/CategoriesProvider";
 import Loader from "../../Loader/Loader";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
 
 const GetCategories = ({ page }) => {
   const { categories, fetchCategories, deleteCategory } =
@@ -57,68 +66,82 @@ const GetCategories = ({ page }) => {
   }
 
   return (
-    <Card className="w-full max-w-4xl">
+    <Card className="w-full max-w-3xl">
       <CardHeader className="p-4 md:p-6">
         <CardTitle className="font-medium tracking-tight">
           Catégories des produits
-          <br />
-          {categories.length >= 0 && (
-            <span className="text-base text-primary">
-              {categories.length} catégorie(s)
-            </span>
-          )}
         </CardTitle>
+        <CardDescription>
+          Vos catégories de produits. Modifier ou supprimer vos catégories.
+        </CardDescription>
       </CardHeader>
       <CardContent className="p-4 md:p-6">
-        {isLoading ? (
-          ""
-        ) : (
-          <ul className="flex flex-col gap-2">
-            {categories.length === 0 && <p>Aucune catégorie disponible.</p>}
+        <Table>
+          <TableHeader>
+            <TableRow>
+              <TableHead>Image</TableHead>
+              <TableHead>Nom</TableHead>
+              <TableHead>Description</TableHead>
+              <TableHead>Produits</TableHead>
+              <TableHead>Actions</TableHead>
+            </TableRow>
+          </TableHeader>
+          <TableBody className="min-w-xl">
+            {categories.length === 0 && (
+              <TableRow>
+                <TableCell colSpan={4}>Aucune catégorie disponible.</TableCell>
+              </TableRow>
+            )}
             {categories.map((category) => (
-              <li
+              <TableRow
                 key={category._id}
-                className="flex justify-between gap-2 rounded border bg-gray-50 p-2 px-2"
+                className="cursor-pointer"
+                onClick={() =>
+                  (window.location.href = `/admin/produits/categories/${category._id}`)
+                }
               >
-                <div className="flex gap-2">
+                <TableCell className="w-24">
                   <Image
                     src={`http://localhost:3000${category.image}`}
-                    width={200}
-                    height={200}
+                    width={80}
+                    height={80}
                     alt={category.altDescription}
-                    crossOrigin="anonymous"
-                    className="h-20 w-14 rounded object-cover lg:h-36 lg:w-24"
+                    className="h-12 w-12 rounded object-cover lg:h-14 lg:w-14"
                   />
-                  <div className="flex h-full flex-col">
-                    <h3 className="font-medium">{category.name}</h3>
-                    {category.productIds.length >= 0 && (
-                      <p className="text-muted-foreground">
-                        {category.productIds.length} Produit(s)
-                      </p>
-                    )}
-                  </div>
-                </div>
-                <div className="flex items-center gap-1">
-                  <Button size="sm">
-                    <Link
-                      href={`/admin/produits/categories/${category._id}`}
-                      className="flex w-fit items-center gap-1"
+                </TableCell>
+                <TableCell className="font-medium">{category.name}</TableCell>
+                <TableCell className="text-muted-foreground">
+                  {category.description}
+                </TableCell>
+                <TableCell className="justify-center text-muted-foreground">
+                  x{category.productIds.length}
+                </TableCell>
+                <TableCell>
+                  <div className="flex items-center gap-1">
+                    <Button>
+                      <Link
+                        href={`/admin/produits/categories/${category._id}`}
+                        className="flex w-fit items-center gap-1"
+                        onClick={(e) => e.stopPropagation()} // Prevent redirect on button click
+                      >
+                        <Pencil2Icon className="h-4 w-4" />
+                      </Link>
+                    </Button>
+                    <Button
+                      variant="destructive"
+                      onClick={(e) => {
+                        e.stopPropagation(); // Prevent redirect on delete click
+                        confirmDeleteCategory(category);
+                      }}
                     >
-                      <Pencil2Icon className="h-4 w-4" />
-                    </Link>
-                  </Button>
-                  <Button
-                    size="sm"
-                    variant="destructive"
-                    onClick={() => confirmDeleteCategory(category)}
-                  >
-                    <TrashIcon className="h-4 w-4" />
-                  </Button>
-                </div>
-              </li>
+                      <TrashIcon className="h-4 w-4" />
+                    </Button>
+                  </div>
+                </TableCell>
+              </TableRow>
             ))}
-          </ul>
-        )}
+          </TableBody>
+        </Table>
 
         {dialogOpen && (
           <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
@@ -148,6 +171,7 @@ const GetCategories = ({ page }) => {
           </Dialog>
         )}
       </CardContent>
+
       {page === "dashboard" && (
         <CardFooter className="p-4 md:p-6">
           <Button>

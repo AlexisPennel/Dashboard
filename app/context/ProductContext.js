@@ -91,34 +91,54 @@ export const ProductProvider = ({ children }) => {
     }
   };
 
-  // Update a product and manage category association
   const updateProduct = async (
     updatedProduct,
-    previousCategoryId,
-    newCategoryId,
+    previousCategoryIds, // Changer pour un tableau d'IDs de catégories précédentes
+    newCategoryIds, // Changer pour un tableau d'IDs de nouvelles catégories
   ) => {
     const id = updatedProduct.get("id");
-    console.log(previousCategoryId);
-    console.log(newCategoryId);
+
+    // Vérification si l'ID du produit est présent
+    if (!id) {
+      console.error("ID du produit manquant");
+      return;
+    }
+
     try {
       const response = await api.put(`api/product/${id}`, updatedProduct);
       const modifiedProduct = response.data.product;
 
-      // If the category has changed, update both categories in context
-      if (previousCategoryId !== newCategoryId) {
-        console.log("modif cat");
-        updateCategoryInContext(
-          previousCategoryId,
-          modifiedProduct._id,
-          "remove",
-        );
-        updateCategoryInContext(newCategoryId, modifiedProduct._id, "add");
-      }
+      // Mettre à jour les associations de catégories
+      previousCategoryIds.forEach((previousCategoryId) => {
+        if (!newCategoryIds.includes(previousCategoryId)) {
+          console.log("Retrait de la catégorie");
+          updateCategoryInContext(
+            previousCategoryId, // Passe l'ID de la catégorie ici
+            modifiedProduct._id,
+            "remove",
+          );
+        }
+      });
+
+      newCategoryIds.forEach((newCategoryId) => {
+        if (!previousCategoryIds.includes(newCategoryId)) {
+          console.log("Ajout à la nouvelle catégorie");
+          updateCategoryInContext(
+            newCategoryId, // Passe l'ID de la catégorie ici
+            modifiedProduct._id,
+            "add",
+          );
+        }
+      });
+
+      // Mettre à jour le produit dans le contexte
       setProducts((prevProducts) =>
         prevProducts.map((product) =>
           product._id === modifiedProduct._id ? modifiedProduct : product,
         ),
       );
+
+      // Rediriger l'utilisateur vers la liste des produits
       router.push("/admin/produits/liste");
     } catch (error) {
       console.error("Erreur lors de la mise à jour du produit :", error);
@@ -127,12 +147,14 @@ export const ProductProvider = ({ children }) => {
   };
 
   // Delete a product and update category in context
-  const deleteProduct = async (productSlug, productId, categoryId) => {
+  const deleteProduct = async (productSlug, productId, categoryIds) => {
     try {
       await api.delete(`api/product/${productSlug}`);
 
       // Remove the product ID from its category in context
-      updateCategoryInContext(categoryId, productId, "remove");
+      categoryIds.forEach((categoryId) => {
+        updateCategoryInContext(categoryId, productId, "remove");
+      });
 
       setProducts((prevProducts) =>
         prevProducts.filter((product) => product._id !== productId),

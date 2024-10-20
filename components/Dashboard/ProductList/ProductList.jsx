@@ -44,7 +44,7 @@ const ProductList = ({ token }) => {
               <BreadcrumbLink asChild>
                 <Link
                   href="/admin/produits/liste"
-                  className="text-primary hover:text-primary"
+                  className="font-medium text-primary hover:text-primary"
                 >
                   Liste des produits
                 </Link>

@@ -46,7 +46,7 @@ const CategoriesPage = ({ token }) => {
               <BreadcrumbLink asChild>
                 <Link
                   href="/admin/categories"
-                  className="text-primary hover:text-primary"
+                  className="font-medium text-primary hover:text-primary"
                 >
                   Catégories des produits
                 </Link>

@@ -27,7 +27,12 @@ const AddProduct = () => {
   const [discount, setDiscount] = useState(0);
   const [status, setStatus] = useState("");
   const [description, setDescription] = useState("");
-  const [category, setCategory] = useState("");
+  const [tips, setTips] = useState({
+    expoContent: "",
+    arrosageContent: "",
+    humidityContent: "",
+  });
+  const [categoriesSelected, setCategoriesSelected] = useState([]);
   const [metadata, setMetadata] = useState({
     title: "",
     description: "",
@@ -62,6 +67,20 @@ const AddProduct = () => {
     setMetadata((prev) => ({ ...prev, [field]: value }));
   };
 
+  const handleCategoryChange = (categoryId) => {
+    setCategoriesSelected((prevSelected) => {
+      if (prevSelected.includes(categoryId)) {
+        return prevSelected.filter((id) => id !== categoryId);
+      } else {
+        return [...prevSelected, categoryId];
+      }
+    });
+  };
+
+  const handleTipsChange = (name, value) => {
+    setTips((prev) => ({ ...prev, [name]: value }));
+  };
+
   const handleSubmit = (e) => {
     setIsLoading(true);
     e.preventDefault();
@@ -72,9 +91,14 @@ const AddProduct = () => {
     data.append("discount", discount);
     data.append("status", status);
     data.append("description", description);
-    data.append("category", category);
+    data.append("tips", JSON.stringify(tips));
     data.append("metaTitle", metadata.title);
     data.append("metaDescription", metadata.description);
+
+    // Ajouter chaque catégorie individuellement
+    categoriesSelected.forEach((category) => {
+      data.append("category", category);
+    });
 
     // Ajout des images
     for (let i = 0; i < images.length; i++) {
@@ -89,6 +113,8 @@ const AddProduct = () => {
       setIsLoading(false);
       return;
     }
+
+    console.log(tips);
 
     try {
       addProduct(data, category);
@@ -112,7 +138,7 @@ const AddProduct = () => {
   return (
     <Card className="w-full max-w-2xl">
       <CardContent className="pt-6">
-        <form onSubmit={handleSubmit} className="flex flex-col gap-4">
+        <form onSubmit={handleSubmit} className="flex flex-col gap-6">
           <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
             {/* Nom du produit */}
             <div className="grid gap-2">
@@ -127,28 +153,25 @@ const AddProduct = () => {
                 required
               />
             </div>
-
-            {/* Catégorie du produit */}
-            <div className="grid gap-2">
-              <Label htmlFor="category" className="text-sm font-medium">
-                Catégorie du produit
-              </Label>
-              <Select value={category} onValueChange={setCategory}>
-                <SelectTrigger
-                  id="category"
-                  aria-label="Sélectionnez une catégorie"
-                >
-                  <SelectValue placeholder="Sélectionnez une catégorie" />
-                </SelectTrigger>
-                <SelectContent>
-                  {categories.map((cat) => (
-                    <SelectItem key={cat._id} value={cat._id}>
-                      {cat.name}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
+          </div>
+          {/* Catégories du produit */}
+          <div className="grid gap-2">
+            <Label className="text-sm font-medium" id="category">
+              Catégories du produit
+            </Label>
+            {categories.map((cat) => (
+              <div key={cat._id} className="flex items-center">
+                <input
+                  type="checkbox"
+                  id={`category-${cat._id}`}
+                  value={cat._id}
+                  onChange={() => handleCategoryChange(cat._id)}
+                  checked={categoriesSelected.includes(cat._id)}
+                  className="mr-2"
+                />
+                <Label htmlFor={`category-${cat._id}`}>{cat.name}</Label>
+              </div>
+            ))}
           </div>
           <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
             {/* Prix du produit */}
@@ -210,6 +233,44 @@ const AddProduct = () => {
             />
           </div>
 
+          {/* Conseils du produit */}
+          <div className="grid gap-2">
+            <p className="text-base font-medium">Conseils d&apos;entretien</p>
+            <Label htmlFor="exposition" className="text-sm font-medium">
+              Exposition
+            </Label>
+            <Textarea
+              id="exposition"
+              value={tips.expoContent}
+              onChange={(e) => {
+                handleTipsChange("expoContent", e.target.value);
+              }}
+              required
+            />
+            <Label htmlFor="arrosage" className="text-sm font-medium">
+              Arrosage
+            </Label>
+            <Textarea
+              id="arrosage"
+              value={tips.arrosageContent}
+              onChange={(e) => {
+                handleTipsChange("arrosageContent", e.target.value);
+              }}
+              required
+            />
+            <Label htmlFor="humidity" className="text-sm font-medium">
+              Humidité
+            </Label>
+            <Textarea
+              id="humidity"
+              value={tips.humidityContent}
+              onChange={(e) => {
+                handleTipsChange("humidityContent", e.target.value);
+              }}
+              required
+            />
+          </div>
+
           {/* Meta Title */}
           <div className="grid gap-2">
             <Label htmlFor="metaTitle" className="text-sm font-medium">
@@ -265,7 +326,7 @@ const AddProduct = () => {
                     width={100}
                     height={100}
                     alt={`Aperçu de ${name} - Image ${index + 1}`}
-                    className="rounded"
+                    className="h-24 w-24 rounded object-cover"
                   />
                 ))}
               </div>

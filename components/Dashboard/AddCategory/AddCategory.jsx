@@ -13,17 +13,19 @@ import { Label } from "@radix-ui/react-dropdown-menu";
 import { Input } from "@/components/ui/input";
 import { CategoriesContext } from "@/app/context/CategoriesProvider";
 import { checkAddCategory } from "@/lib/CheckAddCategory";
+import { Textarea } from "@/components/ui/textarea";
 
 const AddCategory = () => {
   const { addCategory } = useContext(CategoriesContext);
   const [categoryName, setCategoryName] = useState("");
-  const [categoryImage, setCategoryImage] = useState(null);
+  const [description, setDescription] = useState("");
+  const [categoryImage, setCategoryImage] = useState([]);
   const [altDescription, setAltDescription] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const [formErrorMessage, setFormErrorMessage] = useState([]);
 
   const handleImageChange = (e) => {
-    setCategoryImage(e.target.files[0]);
+    setCategoryImage([...e.target.files]);
   };
 
   const handleSubmit = (e) => {
@@ -34,9 +36,13 @@ const AddCategory = () => {
     // Création d'un FormData pour envoyer les données sous la forme multipart
     const formData = new FormData();
     formData.append("name", categoryName);
-    if (categoryImage) {
-      formData.append("image", categoryImage);
+    formData.append("description", description);
+
+    // Ajout des images
+    for (let i = 0; i < categoryImage.length; i++) {
+      formData.append("images", categoryImage[i]);
     }
+
     formData.append("altDescription", altDescription);
 
     if (checkAddCategory(formData).length > 0) {
@@ -82,6 +88,22 @@ const AddCategory = () => {
               value={categoryName}
               onChange={(e) => setCategoryName(e.target.value)}
               required
+              className=""
+            />
+          </div>
+
+          {/* Description de la catégorie */}
+          <div className="grid gap-2">
+            <Label htmlFor="description" className="text-sm font-medium">
+              Description de la catégorie
+            </Label>
+            <Textarea
+              id="description"
+              value={description}
+              required
+              onChange={(e) => {
+                setDescription(e.target.value);
+              }}
             />
           </div>
 
@@ -94,7 +116,6 @@ const AddCategory = () => {
               id="categoryImage"
               type="file"
               onChange={handleImageChange}
-              accept="image/*"
             />
           </div>
 

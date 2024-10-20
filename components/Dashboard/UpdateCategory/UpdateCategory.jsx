@@ -14,6 +14,8 @@ import { Input } from "@/components/ui/input";
 import { CategoriesContext } from "@/app/context/CategoriesProvider";
 import Loader from "@/components/Loader/Loader";
 import { checkAddCategory } from "@/lib/CheckAddCategory";
+import { Textarea } from "@/components/ui/textarea";
+import Image from "next/image";
 
 const UpdateCategory = () => {
   const pathname = usePathname();
@@ -22,7 +24,8 @@ const UpdateCategory = () => {
     useContext(CategoriesContext);
   const [category, setCategory] = useState(null);
   const [categoryName, setCategoryName] = useState("");
-  const [categoryImage, setCategoryImage] = useState("");
+  const [description, setDescription] = useState("");
+  const [categoryImage, setCategoryImage] = useState([]);
   const [categoryAlt, setCategoryAlt] = useState("");
   const [loadingDatas, setLoadingDatas] = useState(true);
   const [isLoading, setIsLoading] = useState(false);
@@ -34,7 +37,8 @@ const UpdateCategory = () => {
       if (foundCategory) {
         setCategory(foundCategory);
         setCategoryName(foundCategory.name);
-        setCategoryAlt(foundCategory.alt);
+        setDescription(foundCategory.description);
+        setCategoryAlt(foundCategory.altDescription);
         setLoadingDatas(false);
       } else {
         fetchCategories();
@@ -45,7 +49,8 @@ const UpdateCategory = () => {
   }, [categoryId, categories]);
 
   const handleImageChange = (e) => {
-    setCategoryImage(e.target.files[0]);
+    setCategoryAlt("");
+    setCategoryImage([...e.target.files]);
   };
 
   const handleSubmit = (e) => {
@@ -57,9 +62,13 @@ const UpdateCategory = () => {
     const formData = new FormData();
     formData.append("_id", category._id);
     formData.append("name", categoryName);
+    formData.append("description", description);
     formData.append("altDescription", categoryAlt); // Ajoute la description alt
+
     if (categoryImage) {
-      formData.append("image", categoryImage); // Ajoute la nouvelle image si modifiée
+      for (let i = 0; i < categoryImage.length; i++) {
+        formData.append("images", categoryImage[i]);
+      }
     }
 
     if (checkAddCategory(formData).length > 0) {
@@ -89,7 +98,7 @@ const UpdateCategory = () => {
     <Card className="w-full max-w-md">
       <CardHeader className="p-6">
         <CardTitle className="text-xl font-medium tracking-tight">
-          Modifier la catégorie;
+          Modifier la catégorie
         </CardTitle>
       </CardHeader>
       <CardContent className="pt-6">
@@ -108,21 +117,57 @@ const UpdateCategory = () => {
             />
           </div>
 
+          {/* Description de la catégorie */}
+          <div className="grid gap-2">
+            <Label htmlFor="description" className="text-sm font-medium">
+              Description de la catégorie
+            </Label>
+            <Textarea
+              id="description"
+              value={description}
+              required
+              onChange={(e) => {
+                setDescription(e.target.value);
+              }}
+            />
+          </div>
+
           {/* Upload de l'image */}
           <div className="grid gap-2">
             <Label htmlFor="categoryImage" className="text-sm font-medium">
               Image de la catégorie
               <br />
               <span className="text-sm font-normal text-muted-foreground">
-                *Modification obligatoire
+                *Modification optionnelle
               </span>
             </Label>
+            {categoryImage?.length > 0 ? (
+              <div className="flex gap-2 overflow-x-auto">
+                {Array.from(categoryImage).map((image, index) => (
+                  <Image
+                    key={index}
+                    src={URL.createObjectURL(image)}
+                    width={100}
+                    height={100}
+                    alt={`Aperçu de ${name} - Image ${index + 1}`}
+                    className="h-14 w-14 rounded object-cover"
+                  />
+                ))}
+              </div>
+            ) : (
+              <Image
+                src={`http://localhost:3000${category.image}`}
+                alt={`${categoryAlt}`}
+                width={200}
+                height={200}
+                className="h-14 w-14 rounded-md object-cover shadow"
+              />
+            )}
             <Input
               id="categoryImage"
               type="file"
               onChange={handleImageChange}
               accept="image/*"
-              required
             />
           </div>
 

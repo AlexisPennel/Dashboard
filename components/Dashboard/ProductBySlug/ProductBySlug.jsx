@@ -16,6 +16,7 @@ import {
   CheckIcon,
   CopyIcon,
   Pencil2Icon,
+  SunIcon,
   TrashIcon,
 } from "@radix-ui/react-icons";
 import {
@@ -38,6 +39,8 @@ import {
 } from "@/components/ui/breadcrumb";
 import Link from "next/link";
 import Loader from "@/components/Loader/Loader";
+import { DropletsIcon } from "lucide-react";
+import wateringPrimary from "../../../public/icons/watering-primary.svg";
 
 const ProductBySlug = ({ token }) => {
   const router = useRouter();
@@ -82,13 +85,17 @@ const ProductBySlug = ({ token }) => {
     }, 2000);
   };
 
-  const getCategorieName = (id) => {
-    const categorie = categories.find((categorie) => categorie._id === id);
-    if (categorie) {
-      return categorie.name;
-    } else {
+  const getCategoryNames = (categoryIds) => {
+    if (!Array.isArray(categoryIds) || categoryIds.length === 0) {
       return "Aucune catégorie";
     }
+
+    const categoryNames = categoryIds.map((id) => {
+      const category = categories.find((category) => category._id === id);
+      return category ? category.name : null;
+    });
+
+    return categoryNames.filter(Boolean).join(", ") || "Aucune catégorie"; // Joindre les noms de catégorie ou retourner 'Aucune catégorie'
   };
 
   const handleDelete = async () => {
@@ -135,7 +142,7 @@ const ProductBySlug = ({ token }) => {
             <BreadcrumbLink asChild>
               <Link
                 href={`/admin/produits/liste/${product.slug}`}
-                className="text-primary hover:text-primary"
+                className="font-medium text-primary hover:text-primary"
               >
                 {product.name}
               </Link>
@@ -145,7 +152,7 @@ const ProductBySlug = ({ token }) => {
       </Breadcrumb>
       <header className="flex w-full items-center justify-between">
         {/* Title + badge */}
-        <div className="flex flex-col gap-2 md:flex-row md:items-center md:gap-4">
+        <div className="flex flex-wrap items-center gap-4">
           <h1 className="font-semibold">{product.name}</h1>
           <Badge
             variant={
@@ -163,26 +170,6 @@ const ProductBySlug = ({ token }) => {
                 ? "Brouillon"
                 : "Archivé"}
           </Badge>
-        </div>
-        {/* button */}
-        <div className="flex gap-2">
-          <Button className="flex gap-1" size="sm">
-            <Link
-              href={`/admin/produits/liste/modifier/${product.slug}`}
-              className="flex items-center gap-2"
-            >
-              <Pencil2Icon />
-            </Link>
-          </Button>
-          <Button
-            variant="destructive"
-            size="sm"
-            onClick={() => {
-              setIsDialogOpen(true);
-            }}
-          >
-            <TrashIcon />
-          </Button>
         </div>
       </header>
 
@@ -215,15 +202,16 @@ const ProductBySlug = ({ token }) => {
       {/* Catégorie + prix + ventes + CA */}
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
         {/* catégorie */}
+        {/* catégorie */}
         <Card className="w-full">
           <CardHeader className="p-4 pb-0">
             <CardTitle className="text-xl font-medium tracking-tight">
-              Catégorie du produit
+              Catégorie(s) du produit
             </CardTitle>
           </CardHeader>
           <CardContent className="p-4">
             <p className="text-lg text-muted-foreground">
-              {getCategorieName(product.category)}
+              {getCategoryNames(product.category)}
             </p>
           </CardContent>
         </Card>
@@ -283,7 +271,7 @@ const ProductBySlug = ({ token }) => {
       {/* Description + Photos */}
       <div className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-2">
         {/* Photos */}
-        <Card className="w-full max-w-4xl">
+        <Card className="w-full">
           <CardHeader className="p-4">
             <CardTitle className="text-xl font-medium tracking-tight">
               {" "}
@@ -297,15 +285,18 @@ const ProductBySlug = ({ token }) => {
           <CardContent className="p-4">
             <div>
               {product.images && product.images.length >= 1 && (
-                <ul className="flex flex-col gap-2">
+                <ul className="flex flex-col gap-4">
                   {product.images.map((image, index) => (
-                    <li key={index} className="flex w-full gap-2">
+                    <li
+                      key={index}
+                      className="grid grid-cols-[auto_1fr] items-start gap-4"
+                    >
                       <Image
                         src={`http://localhost:3000${image}`}
                         alt={`${product.altDescriptions[index]}`}
                         width={200}
                         height={200}
-                        className="h-16 w-16 rounded-md object-cover shadow lg:h-20 lg:w-20"
+                        className="h-14 w-14 rounded-md object-cover shadow lg:h-20 lg:w-20"
                       />
                       <div className="flex flex-col gap-1">
                         <h3 className="text-base font-medium tracking-tight">
@@ -322,9 +313,9 @@ const ProductBySlug = ({ token }) => {
             </div>
           </CardContent>
         </Card>
-        <div className="flex flex-col gap-4">
+        <div className="flex w-full flex-col gap-4">
           {/* Description du produit */}
-          <Card className="h-fit w-full max-w-4xl">
+          <Card className="h-fit w-full">
             <CardHeader className="p-4 pb-0">
               <CardTitle className="text-xl font-medium tracking-tight">
                 Description du produit
@@ -339,7 +330,7 @@ const ProductBySlug = ({ token }) => {
           </Card>
 
           {/* Meta datas*/}
-          <Card className="h-fit w-full max-w-4xl">
+          <Card className="h-fit w-full">
             <CardHeader className="p-4 pb-0">
               <CardTitle className="text-xl font-medium tracking-tight">
                 Meta datas
@@ -350,14 +341,14 @@ const ProductBySlug = ({ token }) => {
             </CardHeader>
             <CardContent className="flex flex-col gap-4 p-4">
               <div className="flex flex-col gap-2">
-                <h3 className="text-lg font-medium tracking-tight">
-                  Titre de la page
+                <h3 className="text-base font-medium tracking-tight text-primary">
+                  Titre de la page :
                 </h3>
                 <p className="text-sm">{product.metaTitle}</p>
               </div>
               <div className="flex flex-col gap-2">
-                <h3 className="text-lg font-medium tracking-tight">
-                  Description de la page
+                <h3 className="text-base font-medium tracking-tight text-primary">
+                  Description de la page :
                 </h3>
                 <p className="text-sm">{product.metaDescription}</p>
               </div>
@@ -365,56 +356,125 @@ const ProductBySlug = ({ token }) => {
           </Card>
         </div>
       </div>
-      <Card>
-        <CardHeader className="p-4 pb-0">
-          <CardTitle className="text-xl">Adresse URL du produit</CardTitle>
-        </CardHeader>
-        <CardContent className="p-4">
-          <div className="flex flex-wrap items-center gap-4">
-            <p className="text-muted-foreground">{`http://localhost:3001/produits/${product.slug}`}</p>
-            <Button
-              size="sm"
-              onClick={() => {
-                copyToClipboard(
-                  `http://localhost:3001/produits/${product.slug}`,
-                );
-              }}
-            >
-              {isCopy ? (
-                <div className="flex items-center gap-1">
-                  <CheckIcon className="mr-1" />
-                  <p className="text-sm">Copié</p>
-                </div>
-              ) : (
-                <div className="flex items-center gap-1">
-                  <CopyIcon className="mr-1" />
-                  <p className="text-sm">Copier</p>
-                </div>
-              )}
+      <div className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-2">
+        {/* Tips */}
+        <Card className="h-fit w-full">
+          <CardHeader className="p-4 pb-0">
+            <CardTitle className="text-xl font-medium tracking-tight">
+              Conseils d&apos;entretien
+            </CardTitle>
+            <CardDescription>
+              Les conseils d&apos;entretien affichés sur la fiche du produit.
+            </CardDescription>
+          </CardHeader>
+          <CardContent className="flex flex-col gap-4 p-4">
+            <div className="flex flex-col gap-2">
+              <h3 className="inline-flex items-center gap-2 text-base font-medium tracking-tight text-primary">
+                <SunIcon />
+                Exposition
+              </h3>
+              <p className="text-sm">{product.tips?.expoContent}</p>
+            </div>
+            <div className="flex flex-col gap-2">
+              <h3 className="inline-flex items-center gap-2 text-base font-medium tracking-tight text-primary">
+                <Image
+                  src={wateringPrimary}
+                  width={15}
+                  height={15}
+                  alt="Icone arrosoir"
+                />
+                Arrosage
+              </h3>
+              <p className="text-sm">{product.tips?.arrosageContent}</p>
+            </div>
+            <div className="flex flex-col gap-2">
+              <h3 className="inline-flex items-center gap-2 text-base font-medium tracking-tight text-primary">
+                <DropletsIcon size={15} />
+                Humidité
+              </h3>
+              <p className="text-sm">{product.tips?.humidityContent}</p>
+            </div>
+          </CardContent>
+        </Card>
+
+        {/* Reviews */}
+        <Card className="h-fit w-full">
+          <CardHeader className="p-4 pb-0">
+            <CardTitle className="text-xl font-medium tracking-tight">
+              Avis clients
+            </CardTitle>
+            <CardDescription>Avis des clients sur le produit.</CardDescription>
+          </CardHeader>
+          <CardContent className="flex flex-col gap-4 p-4 lg:flex-row lg:gap-16">
+            <h3 className="text-base font-medium tracking-tight text-primary">
+              Note global
+            </h3>
+          </CardContent>
+        </Card>
+      </div>
+      <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
+        <Card className="w-full">
+          <CardHeader className="p-4 pb-0">
+            <CardTitle className="text-xl">Adresse URL du produit</CardTitle>
+            <CardDescription>
+              Copiez l&apos;url du produit pour le partager.
+            </CardDescription>
+          </CardHeader>
+          <CardContent className="p-4">
+            <div className="flex flex-wrap items-center gap-4">
+              <p className="font-medium text-primary">{`http://localhost:3001/produits/${product.slug}`}</p>
+              <Button
+                size="sm"
+                onClick={() => {
+                  copyToClipboard(
+                    `http://localhost:3001/produits/${product.slug}`,
+                  );
+                }}
+              >
+                {isCopy ? (
+                  <div className="flex items-center gap-1">
+                    <CheckIcon className="mr-1" />
+                    <p className="text-sm">Copié</p>
+                  </div>
+                ) : (
+                  <div className="flex items-center gap-1">
+                    <CopyIcon className="mr-1" />
+                    <p className="text-sm">Copier</p>
+                  </div>
+                )}
+              </Button>
+            </div>
+          </CardContent>
+        </Card>
+        <Card className="w-full">
+          <CardHeader className="p-4 pb-0">
+            <CardTitle className="text-xl">Actions</CardTitle>
+            <CardDescription>
+              Modifiez ou supprimez votre produit.
+            </CardDescription>
+          </CardHeader>
+          <CardContent className="flex w-full flex-col justify-center gap-2 p-4 lg:flex-row lg:justify-start">
+            <Button className="lg:w-fit">
+              <Link
+                href={`/admin/produits/liste/modifier/${product.slug}`}
+                className="flex items-center gap-2"
+              >
+                <Pencil2Icon />
+                Modifier le produit
+              </Link>
             </Button>
-          </div>
-        </CardContent>
-      </Card>
-      <div className="flex w-full flex-col justify-center gap-2 pb-4">
-        <Button className="lg:w-fit">
-          <Link
-            href={`/admin/produits/liste/modifier/${product.slug}`}
-            className="flex items-center gap-2"
-          >
-            <Pencil2Icon />
-            Modifier le produit
-          </Link>
-        </Button>
-        <Button
-          variant="destructive"
-          onClick={() => {
-            setIsDialogOpen(true);
-          }}
-          className="flex gap-2 lg:w-fit"
-        >
-          <TrashIcon />
-          Supprimer le produit
-        </Button>
+            <Button
+              variant="destructive"
+              onClick={() => {
+                setIsDialogOpen(true);
+              }}
+              className="flex gap-2 font-normal lg:w-fit"
+            >
+              <TrashIcon />
+              Supprimer le produit
+            </Button>
+          </CardContent>
+        </Card>
       </div>
     </section>
   );

@@ -66,6 +66,15 @@ export const CategoriesProvider = ({ children }) => {
     }
   };
 
+  const getPopulateCategory = async (slug) => {
+    try {
+      const response = await api.get(`/api/category/populateCategory/${slug}`);
+      console.log(response.data);
+    } catch (error) {
+      console.log(error);
+    }
+  };
+
   return (
     <CategoriesContext.Provider
       value={{
@@ -75,6 +84,7 @@ export const CategoriesProvider = ({ children }) => {
         addCategory,
         updateCategory,
         deleteCategory,
+        getPopulateCategory,
       }}
     >
       {children}

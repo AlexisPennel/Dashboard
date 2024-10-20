@@ -3,6 +3,7 @@ import React, { useState } from "react";
 import {
   Card,
   CardContent,
+  CardDescription,
   CardFooter,
   CardHeader,
   CardTitle,
@@ -77,9 +78,12 @@ const Login = () => {
   };
 
   return (
-    <Card className="mx-auto mt-8 max-w-sm">
+    <Card className="w-full max-w-md">
       <CardHeader>
         <CardTitle className="text-2xl">Connexion</CardTitle>
+        <CardDescription>
+          Connectez-vous à votre compte administrateur.
+        </CardDescription>
       </CardHeader>
       <CardContent className="grid gap-4">
         <form onSubmit={handleSubmit} className="flex flex-col gap-4">
